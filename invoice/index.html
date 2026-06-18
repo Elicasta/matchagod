@@ -446,6 +446,11 @@
       display: grid;
       gap: 0.45rem;
     }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
     .form-field label {
       display: grid;
       grid-template-columns: auto 1fr;
@@ -463,6 +468,7 @@
       color: var(--olive-lt);
       margin-top: 0.08rem;
     }
+    .form-field input,
     .form-field textarea,
     .form-field select {
       width: 100%;
@@ -487,6 +493,7 @@
       background-size: 6px 6px, 6px 6px;
       background-repeat: no-repeat;
     }
+    .form-field input:focus,
     .form-field textarea:focus,
     .form-field select:focus {
       border-color: var(--olive-lt);
@@ -580,6 +587,7 @@
       .payment-copy > .label + h2 { margin-bottom: 0.55rem; }
       .section-intro { margin-bottom: 1.05rem; }
       .onboarding-form { gap: 0.9rem; margin-top: 1.05rem; }
+      .contact-grid { grid-template-columns: 1fr; gap: 0.9rem; }
       .form-actions { align-items: stretch; }
       .email-answers-button { width: 100%; }
 
@@ -693,6 +701,19 @@
 
         <form class="onboarding-form" id="onboarding-form">
           <input type="text" name="companyWebsite" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;" />
+
+          <div class="contact-grid" aria-label="Contact details">
+            <div class="form-field">
+              <label for="client-name"><span class="field-number">—</span><span>Your name</span></label>
+              <input id="client-name" name="clientName" type="text" autocomplete="name" placeholder="Your name" required />
+            </div>
+
+            <div class="form-field">
+              <label for="client-email"><span class="field-number">—</span><span>Your email</span></label>
+              <input id="client-email" name="clientEmail" type="email" autocomplete="email" placeholder="you@example.com" required />
+            </div>
+          </div>
+
           <div class="form-field">
             <label for="popup-dates"><span class="field-number">01</span><span>What are the next Matcha God pop-up dates we should be aware of?</span></label>
             <textarea id="popup-dates" name="popupDates" placeholder="Example: June 28, July 12, pending dates, etc."></textarea>
@@ -794,6 +815,8 @@
 
         const data = new FormData(form);
         const payload = {
+          clientName: String(data.get('clientName') || '').trim(),
+          clientEmail: String(data.get('clientEmail') || '').trim(),
           popupDates: String(data.get('popupDates') || '').trim(),
           weekdayAvailability: String(data.get('weekdayAvailability') || '').trim(),
           kitchenVibe: String(data.get('kitchenVibe') || '').trim(),
@@ -803,8 +826,13 @@
           source: 'Matcha God invoice page'
         };
 
+        if (!payload.clientName || !payload.clientEmail) {
+          setStatus('error', 'Add your name and email before sending.');
+          return;
+        }
+
         if (!payload.popupDates && !payload.weekdayAvailability && !payload.kitchenVibe && !payload.priorityDetails && !payload.mustHaveShots) {
-          setStatus('error', 'Add at least one answer before sending.');
+          setStatus('error', 'Add at least one onboarding answer before sending.');
           return;
         }
 
@@ -827,7 +855,7 @@
           setStatus('success', 'Sent. Thank you. We received your onboarding answers.');
           form.reset();
         } catch (error) {
-          setStatus('error', 'Something went wrong. Please email your answers to hello@eccreativestudios.com.');
+          setStatus('error', error.message || 'Something went wrong. Please email your answers to hello@eccreativestudios.com.');
         } finally {
           button.disabled = false;
           button.textContent = 'Send Answers';

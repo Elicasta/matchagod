@@ -20,6 +20,11 @@ export default async function handler(req, res) {
 
   const clean = (value) => String(value || '').trim().slice(0, 3000);
 
+  const client = {
+    name: clean(body.clientName),
+    email: clean(body.clientEmail)
+  };
+
   const answers = {
     popupDates: clean(body.popupDates),
     weekdayAvailability: clean(body.weekdayAvailability),
@@ -27,6 +32,14 @@ export default async function handler(req, res) {
     priorityDetails: clean(body.priorityDetails),
     mustHaveShots: clean(body.mustHaveShots)
   };
+
+  if (!client.name || !client.email) {
+    return res.status(400).json({ error: 'Name and email are required.' });
+  }
+
+  if (!/^\S+@\S+\.\S+$/.test(client.email)) {
+    return res.status(400).json({ error: 'Enter a valid email address.' });
+  }
 
   const hasAnswer = Object.values(answers).some(Boolean);
   if (!hasAnswer) {
@@ -41,13 +54,15 @@ export default async function handler(req, res) {
 
   const subject = 'Matcha God Onboarding Answers';
 
-  const text = `Matcha God Onboarding Answers\n\nSubmitted: ${submittedAt} ET\nSource: ${clean(body.source) || 'Invoice page'}\n\n1. Next pop-up dates:\n${answers.popupDates || 'Not answered'}\n\n2. Weekday availability for studio content session:\n${answers.weekdayAvailability || 'Not answered'}\n\n3. Kitchen setup vibe:\n${answers.kitchenVibe || 'Not answered'}\n\n4. Priority drinks, products, ingredients, or details:\n${answers.priorityDetails || 'Not answered'}\n\n5. Must-have shots, reel ideas, or brand details:\n${answers.mustHaveShots || 'Not answered'}\n`;
+  const text = `Matcha God Onboarding Answers\n\nSubmitted: ${submittedAt} ET\nSource: ${clean(body.source) || 'Invoice page'}\nClient name: ${client.name}\nClient email: ${client.email}\n\n1. Next pop-up dates:\n${answers.popupDates || 'Not answered'}\n\n2. Weekday availability for studio content session:\n${answers.weekdayAvailability || 'Not answered'}\n\n3. Kitchen setup vibe:\n${answers.kitchenVibe || 'Not answered'}\n\n4. Priority drinks, products, ingredients, or details:\n${answers.priorityDetails || 'Not answered'}\n\n5. Must-have shots, reel ideas, or brand details:\n${answers.mustHaveShots || 'Not answered'}\n`;
 
   const html = `
     <div style="font-family: Inter, Arial, sans-serif; color: #1E2018; line-height: 1.6; max-width: 680px;">
       <h1 style="font-family: Georgia, serif; color: #1E3A20; font-weight: 400;">Matcha God Onboarding Answers</h1>
       <p><strong>Submitted:</strong> ${submittedAt} ET</p>
       <p><strong>Source:</strong> ${escapeHtml(clean(body.source) || 'Invoice page')}</p>
+      <p><strong>Client name:</strong> ${escapeHtml(client.name)}</p>
+      <p><strong>Client email:</strong> ${escapeHtml(client.email)}</p>
       ${answerBlock('1. Next pop-up dates', answers.popupDates)}
       ${answerBlock('2. Weekday availability for studio content session', answers.weekdayAvailability)}
       ${answerBlock('3. Kitchen setup vibe', answers.kitchenVibe)}
@@ -68,7 +83,7 @@ export default async function handler(req, res) {
       subject,
       text,
       html,
-      reply_to: toEmail
+      reply_to: client.email
     })
   });
 

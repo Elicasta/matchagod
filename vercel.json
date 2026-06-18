@@ -2,6 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "rewrites": [
-    { "source": "/", "destination": "/matcha-god-proposal.html" }
+    { "source": "/proposal", "destination": "/index.html" },
+    { "source": "/invoice", "destination": "/invoice/index.html" }
   ]
 }
